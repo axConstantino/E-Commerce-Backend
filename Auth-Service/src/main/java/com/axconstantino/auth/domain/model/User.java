@@ -3,7 +3,8 @@ package com.axconstantino.auth.domain.model;
 import java.util.*;
 
 public class User {
-    private final UUID id;
+
+    private UUID id;
     private final String email;
     private String password;
     private final Set<Role> roles;
@@ -11,17 +12,27 @@ public class User {
     private boolean emailVerified;
     private final Set<Token> tokens;
 
+    public static User register(String email, String password, Set<Role> roles) {
+        return new User(UUID.randomUUID(), email, password, roles != null ? roles : new HashSet<>(), true, false, new HashSet<>());
+    }
+
     public User(UUID id, String email, String password, Set<Role> roles,
                 boolean active, boolean emailVerified, Set<Token> tokens) {
         this.id = id;
-        this.email = email;
-        this.password = password;
-        this.roles = new HashSet<>(roles);
+        this.email = Objects.requireNonNull(email);
+        this.password = Objects.requireNonNull(password);
+        this.roles = new HashSet<>(Objects.requireNonNull(roles));
         this.active = active;
         this.emailVerified = emailVerified;
-        this.tokens = new HashSet<>(tokens);
+        this.tokens = new HashSet<>(Objects.requireNonNull(tokens));
     }
 
+    public void setId(UUID id) {
+        if (this.id != null) {
+            throw new IllegalStateException("ID already set");
+        }
+        this.id = Objects.requireNonNull(id);
+    }
 
     public UUID getId() { return id; }
     public String getEmail() { return email; }
