@@ -20,7 +20,6 @@ import java.util.UUID;
 public class UserEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
     @Column(updatable = false, nullable = false)
     @EqualsAndHashCode.Include
     private UUID id;
