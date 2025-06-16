@@ -23,11 +23,18 @@ public class TokenRepositoryJpaAdapter implements TokenRepository {
     }
 
     @Override
-    public List<Token> findAllByUserId(UUID userId) {
-        return jpaRepo.findAllByUserId(userId)
+    public List<Token> findAllValidTokensByUser(UUID userId) {
+        return jpaRepo.findAllValidTokensByUser(userId)
                 .stream()
                 .map(mapper::toDomain)
                 .toList();
+    }
+
+    @Override
+    public void saveAll(List<Token> tokens) {
+        jpaRepo.saveAll(tokens.stream()
+                .map(mapper::toEntity)
+                .toList());
     }
 
     @Override
@@ -35,16 +42,4 @@ public class TokenRepositoryJpaAdapter implements TokenRepository {
         jpaRepo.save(mapper.toEntity(token));
     }
 
-    @Override
-    public void delete(String token) {
-        jpaRepo.findByToken(token).ifPresent(jpaRepo::delete);
-    }
-
-    @Override
-    public void deleteAllByUserId(UUID userId) {
-        List<Token> tokens = findAllByUserId(userId);
-        for (Token token : tokens) {
-            jpaRepo.delete(mapper.toEntity(token));
-        }
-    }
-}
+ }

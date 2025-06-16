@@ -8,8 +8,7 @@ import java.util.UUID;
 
 public interface TokenRepository {
     Optional<Token> findByToken(String token);
-    List<Token> findAllByUserId(UUID userId);
+    List<Token> findAllValidTokensByUser(UUID userId);
+    void saveAll(List<Token> tokens);
     void save(Token token);
-    void delete(String token);
-    void deleteAllByUserId(UUID userId);
 }

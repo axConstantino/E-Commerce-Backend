@@ -9,5 +9,5 @@ import java.util.UUID;
 
 public interface TokenJpaRepository extends JpaRepository<TokenEntity, UUID> {
     Optional<TokenEntity> findByToken(String token);
-    List<TokenEntity> findAllByUserId(UUID userId);
+    List<TokenEntity> findAllValidTokensByUser(UUID userId);
 }

@@ -7,10 +7,8 @@ import com.axconstantino.auth.domain.model.Role;
 import com.axconstantino.auth.domain.model.Token;
 import com.axconstantino.auth.domain.model.TokenType;
 import com.axconstantino.auth.domain.model.User;
-import com.axconstantino.auth.domain.repository.TokenCacheRepository;
 import com.axconstantino.auth.domain.repository.UserRepository;
 import com.axconstantino.auth.infrastructure.jwt.JwtProvider;
-import com.axconstantino.auth.infrastructure.redis.model.TokenData;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import lombok.RequiredArgsConstructor;
@@ -18,8 +16,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Duration;
-import java.time.Instant;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
@@ -30,8 +26,9 @@ import java.util.Set;
 public class RegisterUserService implements RegisterUser {
     private final JwtProvider jwtProvider;
     private final UserRepository repository;
+    private final TokenService tokenService;
     private final PasswordEncoder passwordEncoder;
-    private final TokenCacheRepository tokenCacheRepository;
+
 
     /**
      * Registers a new user and generates authentication tokens
@@ -66,16 +63,18 @@ public class RegisterUserService implements RegisterUser {
         String userAgent = httpRequest.getHeader("User-Agent");
         log.debug("Captured client context - IP: {}, User-Agent: {}", ipAddress, userAgent);
 
-        Token accessToken = createToken(
+        Token accessToken = tokenService.createToken(
                 jwtProvider.generateAccessToken(user),
                 TokenType.ACCESS_TOKEN,
+                user,
                 ipAddress,
                 userAgent
         );
 
-        Token refreshToken = createToken(
+        Token refreshToken = tokenService.createToken(
                 jwtProvider.generateRefreshToken(user),
                 TokenType.REFRESH_TOKEN,
+                user,
                 ipAddress,
                 userAgent
         );
@@ -85,7 +84,7 @@ public class RegisterUserService implements RegisterUser {
         user.addToken(refreshToken);
 
         repository.save(user);
-        saveTokenInCache(user, accessToken);
+        tokenService.saveTokenInCache(user, accessToken);
         log.info("User registered successfully. ID: {}, Email: {}", user.getId(), user.getEmail());
 
         return new TokenResponse(accessToken.getToken(), refreshToken.getToken());
@@ -127,40 +126,4 @@ public class RegisterUserService implements RegisterUser {
         return new HashSet<>(Collections.singleton(Role.ROLE_USER));
     }
 
-    /**
-     * Creates a token entity with metadata
-     *
-     * @param tokenString JWT token string
-     * @param type Token type (ACCESS/REFRESH)
-     * @param ipAddress Client IP address
-     * @param userAgent Client user agent string
-     * @return Token entity with expiration metadata
-     */
-    private Token createToken(String tokenString, TokenType type, String ipAddress, String userAgent) {
-        Instant issuedAt = jwtProvider.extractIssuedAt(tokenString).toInstant();
-        Instant expiresAt = jwtProvider.extractExpiration(tokenString).toInstant();
-
-        log.trace("Created {} token. Issued: {}, Expires: {}", type, issuedAt, expiresAt);
-        return new Token(tokenString, type, issuedAt, expiresAt, ipAddress, userAgent, true);
-    }
-
-    /**
-     * Caches token for quick validation and revocation checks
-     *
-     * @param user User entity
-     * @param token Token to cache
-     */
-    private void saveTokenInCache(User user, Token token) {
-        TokenData data = new TokenData(
-                user.getId().toString(),
-                true,
-                token.getExpiresAt(),
-                token.getIpAddress(),
-                token.getUserAgent()
-        );
-
-        Duration ttl = Duration.between(Instant.now(), token.getExpiresAt());
-        tokenCacheRepository.save(token.getToken(), data, ttl);
-        log.debug("Cached token for user ID: {} with TTL: {} seconds", user.getId(), ttl.getSeconds());
-    }
 }
