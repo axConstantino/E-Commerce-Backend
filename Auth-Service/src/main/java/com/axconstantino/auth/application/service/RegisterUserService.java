@@ -66,6 +66,7 @@ public class RegisterUserService implements RegisterUser {
         Token accessToken = tokenService.createToken(
                 jwtProvider.generateAccessToken(user),
                 TokenType.ACCESS_TOKEN,
+                user,
                 ipAddress,
                 userAgent
         );
@@ -73,6 +74,7 @@ public class RegisterUserService implements RegisterUser {
         Token refreshToken = tokenService.createToken(
                 jwtProvider.generateRefreshToken(user),
                 TokenType.REFRESH_TOKEN,
+                user,
                 ipAddress,
                 userAgent
         );

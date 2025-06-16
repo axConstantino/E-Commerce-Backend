@@ -8,7 +8,7 @@ import com.axconstantino.auth.domain.model.TokenType;
 import com.axconstantino.auth.domain.model.User;
 import com.axconstantino.auth.domain.repository.TokenRepository;
 import com.axconstantino.auth.domain.repository.UserRepository;
-import com.axconstantino.auth.exception.BadCredentialException;
+import com.axconstantino.auth.exception.BadCredentialsException;
 import com.axconstantino.auth.infrastructure.jwt.JwtProvider;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -36,12 +36,12 @@ public class LoginUserService implements LoginUser {
         User user = userRepository.findByEmail(command.email())
                 .orElseThrow(() -> {
                     log.warn("Authentication failed for email {}: User not found", command.email());
-                    return new BadCredentialException("Invalid email or password");
+                    return new BadCredentialsException("Invalid email or password");
                 });
 
         if (!passwordEncoder.matches(command.password(), user.getPassword())) {
             log.warn("Authentication failed for user {}: Invalid password", user.getId());
-            throw new BadCredentialException("Invalid email or password");
+            throw new BadCredentialsException("Invalid email or password");
         }
 
         log.info("User {} authenticated successfully", user.getId());
@@ -50,8 +50,8 @@ public class LoginUserService implements LoginUser {
         String ipAddress = httpRequest.getRemoteAddr();
         String userAgent = httpRequest.getHeader("User-Agent");
 
-        Token accessToken = tokenService.createToken(jwtProvider.generateAccessToken(user), TokenType.ACCESS_TOKEN, ipAddress, userAgent);
-        Token refreshToken = tokenService.createToken(jwtProvider.generateRefreshToken(user), TokenType.REFRESH_TOKEN, ipAddress, userAgent);
+        Token accessToken = tokenService.createToken(jwtProvider.generateAccessToken(user), TokenType.ACCESS_TOKEN, user,ipAddress, userAgent);
+        Token refreshToken = tokenService.createToken(jwtProvider.generateRefreshToken(user), TokenType.REFRESH_TOKEN, user, ipAddress, userAgent);
 
         user.addToken(accessToken);
         user.addToken(refreshToken);

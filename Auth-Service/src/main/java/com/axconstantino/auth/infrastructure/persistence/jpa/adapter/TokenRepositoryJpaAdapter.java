@@ -7,6 +7,7 @@ import com.axconstantino.auth.infrastructure.persistence.mapper.TokenJpaMapper;
 import lombok.RequiredArgsConstructor;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @RequiredArgsConstructor
@@ -15,13 +16,10 @@ public class TokenRepositoryJpaAdapter implements TokenRepository {
     private final TokenJpaRepository jpaRepo;
     private final TokenJpaMapper mapper;
 
-
     @Override
-    public List<Token> findAllByUserId(UUID userId) {
-        return jpaRepo.findAllByUserId(userId)
-                .stream()
-                .map(mapper::toDomain)
-                .toList();
+    public Optional<Token> findByToken(String token) {
+        return jpaRepo.findByToken(token)
+                .map(mapper::toDomain);
     }
 
     @Override

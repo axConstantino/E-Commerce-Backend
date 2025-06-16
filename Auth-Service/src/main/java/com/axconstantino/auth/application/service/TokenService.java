@@ -31,11 +31,11 @@ public class TokenService {
      * @param userAgent The client's User-Agent.
      * @return A new Token entity, ready to be associated with a user.
      */
-    public Token createToken(String tokenString, TokenType  type, String ipAddress, String userAgent) {
+    public Token createToken(String tokenString, TokenType  type, User user, String ipAddress, String userAgent) {
         Instant issuedAt = jwtProvider.extractIssuedAt(tokenString).toInstant();
         Instant expiresAt = jwtProvider.extractExpiration(tokenString).toInstant();
         log.trace("Created {} token. Issued: {}, Expires: {}", type, issuedAt, expiresAt);
-        return new Token(tokenString, type, issuedAt, expiresAt, ipAddress, userAgent, true);
+        return new Token(tokenString, type, issuedAt, expiresAt, ipAddress, userAgent, true, user);
     }
 
     /**
