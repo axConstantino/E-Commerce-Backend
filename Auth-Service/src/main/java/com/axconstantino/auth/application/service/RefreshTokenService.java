@@ -30,7 +30,7 @@ public class RefreshTokenService implements RefreshToken {
         final String refreshToken;
         final String userEmail;
 
-        if (authHeader == null && !authHeader.startsWith("Bearer ")) {
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             log.warn("Refresh token attempt failed: Authorization header missing or invalid");
             throw new BadCredentialsException("RefreshToken is missing or invalid");
         }
