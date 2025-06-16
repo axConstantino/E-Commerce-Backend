@@ -3,6 +3,7 @@ package com.axconstantino.auth.domain.model;
 import java.time.Instant;
 
 public class Token {
+
     private final String token;
     private final TokenType type;
     private final Instant issuedAt;
@@ -29,6 +30,7 @@ public class Token {
     public String getIpAddress() { return ipAddress; }
     public String getUserAgent() { return userAgent; }
     public boolean isActive() { return active; }
+
 
     public boolean isExpired() {
         return expiresAt != null && Instant.now().isAfter(expiresAt);
