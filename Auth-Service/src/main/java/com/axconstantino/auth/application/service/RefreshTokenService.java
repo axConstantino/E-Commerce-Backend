@@ -5,7 +5,7 @@ import com.axconstantino.auth.application.usecase.RefreshToken;
 import com.axconstantino.auth.domain.model.Token;
 import com.axconstantino.auth.domain.model.TokenType;
 import com.axconstantino.auth.domain.repository.TokenRepository;
-import com.axconstantino.auth.exception.BadCredentialsException;
+import com.axconstantino.auth.domain.exception.BadCredentialsException;
 import com.axconstantino.auth.infrastructure.jwt.JwtProvider;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -30,7 +30,7 @@ public class RefreshTokenService implements RefreshToken {
         final String refreshToken;
         final String userEmail;
 
-        if (authHeader == null && !authHeader.startsWith("Bearer ")) {
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             log.warn("Refresh token attempt failed: Authorization header missing or invalid");
             throw new BadCredentialsException("RefreshToken is missing or invalid");
         }

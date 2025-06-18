@@ -2,7 +2,6 @@ package com.axconstantino.auth.infrastructure.persistence.jpa.adapter;
 
 import com.axconstantino.auth.domain.model.User;
 import com.axconstantino.auth.domain.repository.UserRepository;
-import com.axconstantino.auth.infrastructure.persistence.jpa.entity.UserEntity;
 import com.axconstantino.auth.infrastructure.persistence.jpa.repository.UserJpaRepository;
 import com.axconstantino.auth.infrastructure.persistence.mapper.UserJpaMapper;
 import lombok.RequiredArgsConstructor;
@@ -36,14 +35,5 @@ public class UserRepositoryJpaAdapter implements UserRepository {
     @Override
     public void save(User user) {
         jpaRepo.save(mapper.toEntity(user));
-    }
-
-    @Override
-    public void deleteById(UUID id) {
-        UserEntity user = jpaRepo.findById(id)
-                .orElseThrow();
-
-        User deletedUser = mapper.toDomain(user);
-        deletedUser.deactivate();
     }
 }

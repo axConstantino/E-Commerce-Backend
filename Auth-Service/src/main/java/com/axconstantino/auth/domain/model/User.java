@@ -5,18 +5,19 @@ import java.util.*;
 public class User {
 
     private UUID id;
-    private final String email;
+    private String name;
+    private String email;
     private String password;
     private final Set<Role> roles;
     private boolean active;
     private boolean emailVerified;
     private final Set<Token> tokens;
 
-    public static User register(String email, String password, Set<Role> roles) {
-        return new User(UUID.randomUUID(), email, password, roles != null ? roles : new HashSet<>(), true, false, new HashSet<>());
+    public static User register(String name, String email, String password, Set<Role> roles) {
+        return new User(UUID.randomUUID(), name, email, password, roles != null ? roles : new HashSet<>(), true, false, new HashSet<>());
     }
 
-    public User(UUID id, String email, String password, Set<Role> roles,
+    public User(UUID id, String name, String email, String password, Set<Role> roles,
                 boolean active, boolean emailVerified, Set<Token> tokens) {
         this.id = id;
         this.email = Objects.requireNonNull(email);
@@ -27,14 +28,8 @@ public class User {
         this.tokens = new HashSet<>(Objects.requireNonNull(tokens));
     }
 
-    public void setId(UUID id) {
-        if (this.id != null) {
-            throw new IllegalStateException("ID already set");
-        }
-        this.id = Objects.requireNonNull(id);
-    }
-
-    public UUID getId() { return id; }
+    public UUID getId() { return id;}
+    public String getName() { return name; }
     public String getEmail() { return email; }
     public String getPassword() { return password; }
     public Set<Role> getRoles() { return Collections.unmodifiableSet(roles); }
@@ -52,6 +47,15 @@ public class User {
 
     public void deactivate() {
         this.active = false;
+    }
+
+    public void changeEmail(String newEmail) {
+        this.email = Objects.requireNonNull(newEmail);
+        this.emailVerified = false;
+    }
+
+    public void changeName(String newName) {
+        this.name = Objects.requireNonNull(newName);
     }
 
     public void changePassword(String newPassword) {
