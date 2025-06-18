@@ -4,6 +4,7 @@ import com.axconstantino.auth.application.command.AuthenticateCommand;
 import com.axconstantino.auth.application.command.RegisterCommand;
 import com.axconstantino.auth.application.dto.TokenResponse;
 import com.axconstantino.auth.application.usecase.RegisterUser;
+import com.axconstantino.auth.domain.event.UserRegisteredEvent;
 import com.axconstantino.auth.domain.model.Role;
 import com.axconstantino.auth.domain.model.Token;
 import com.axconstantino.auth.domain.model.TokenType;
@@ -29,6 +30,7 @@ public class RegisterUserService implements RegisterUser {
     private final UserRepository repository;
     private final TokenService tokenService;
     private final PasswordEncoder passwordEncoder;
+    private final EventPublisherService eventPublisher;
 
 
     /**
@@ -88,6 +90,12 @@ public class RegisterUserService implements RegisterUser {
         repository.save(user);
         tokenService.saveTokenInCache(user, accessToken);
         log.info("User registered successfully. ID: {}, Email: {}", user.getId(), user.getEmail());
+
+        eventPublisher.publishUserRegisteredEvent(new UserRegisteredEvent(
+                user.getId(),
+                user.getName(),
+                user.getEmail()
+        ));
 
         return new TokenResponse(accessToken.getToken(), refreshToken.getToken());
     }
