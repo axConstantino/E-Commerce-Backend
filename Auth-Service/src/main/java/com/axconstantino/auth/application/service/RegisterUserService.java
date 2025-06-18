@@ -1,6 +1,7 @@
 package com.axconstantino.auth.application.service;
 
 import com.axconstantino.auth.application.command.AuthenticateCommand;
+import com.axconstantino.auth.application.command.RegisterCommand;
 import com.axconstantino.auth.application.dto.TokenResponse;
 import com.axconstantino.auth.application.usecase.RegisterUser;
 import com.axconstantino.auth.domain.model.Role;
@@ -48,12 +49,13 @@ public class RegisterUserService implements RegisterUser {
      */
     @Override
     @Transactional
-    public TokenResponse execute(AuthenticateCommand command, HttpServletRequest httpRequest) {
+    public TokenResponse execute(RegisterCommand command, HttpServletRequest httpRequest) {
         log.info("Registering new user with email: {}", command.email());
 
         validateEmailNotInUse(command.email());
 
         User user = User.register(
+                command.name(),
                 command.email(),
                 encodePassword(command.password()),
                 getDefaultRoles()

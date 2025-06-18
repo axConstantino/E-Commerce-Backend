@@ -1,11 +1,13 @@
 package com.axconstantino.auth.web;
 
 import com.axconstantino.auth.application.command.AuthenticateCommand;
+import com.axconstantino.auth.application.command.RegisterCommand;
 import com.axconstantino.auth.application.dto.TokenResponse;
 import com.axconstantino.auth.application.usecase.LoginUser;
 import com.axconstantino.auth.application.usecase.RefreshToken;
 import com.axconstantino.auth.application.usecase.RegisterUser;
 import com.axconstantino.auth.web.dto.AuthenticateRequest;
+import com.axconstantino.auth.web.dto.RegisterRequest;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -23,8 +25,9 @@ public class AuthController {
     private final RefreshToken refreshToken;
 
     @PostMapping("/register")
-    public ResponseEntity<TokenResponse> register(AuthenticateRequest request, HttpServletRequest httpRequest) {
-        AuthenticateCommand command = new AuthenticateCommand(
+    public ResponseEntity<TokenResponse> register(RegisterRequest request, HttpServletRequest httpRequest) {
+        RegisterCommand command = new RegisterCommand(
+                request.getName(),
                 request.getEmail(),
                 request.getPassword()
         );

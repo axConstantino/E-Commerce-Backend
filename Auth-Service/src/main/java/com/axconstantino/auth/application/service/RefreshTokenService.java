@@ -5,7 +5,7 @@ import com.axconstantino.auth.application.usecase.RefreshToken;
 import com.axconstantino.auth.domain.model.Token;
 import com.axconstantino.auth.domain.model.TokenType;
 import com.axconstantino.auth.domain.repository.TokenRepository;
-import com.axconstantino.auth.exception.BadCredentialsException;
+import com.axconstantino.auth.domain.exception.BadCredentialsException;
 import com.axconstantino.auth.infrastructure.jwt.JwtProvider;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
