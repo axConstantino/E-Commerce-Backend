@@ -1,7 +1,7 @@
 package com.axconstantino.auth.application.command;
 
 public record RegisterCommand(
-        String name,
+        String userName,
         String email,
         String password
 ) {}
