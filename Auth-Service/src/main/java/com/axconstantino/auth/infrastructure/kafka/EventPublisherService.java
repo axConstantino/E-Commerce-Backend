@@ -1,5 +1,6 @@
-package com.axconstantino.auth.application.service;
+package com.axconstantino.auth.infrastructure.kafka;
 
+import com.axconstantino.auth.domain.event.PasswordResetEvent;
 import com.axconstantino.auth.domain.event.UserRegisteredEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -8,6 +9,21 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 
+/**
+ * Service responsible for publishing domain events to Kafka topics.
+ * <p>
+ * This service abstracts the Kafka publishing logic and provides specific methods for each event type.
+ * It ensures all Kafka interactions follow a consistent structure with proper logging and error handling.
+ * </p>
+ *
+ * <h2>Supported Events</h2>
+ * <ul>
+ *     <li>{@link UserRegisteredEvent}</li>
+ *     <li>{@link PasswordResetEvent}</li>
+ * </ul>
+ *
+ * <p>New events can be added easily by creating a new publish method that delegates to {@code publishEvent()}.</p>
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -18,36 +34,63 @@ public class EventPublisherService {
     @Value("${spring.kafka.topic.user-registered}")
     private String userRegisteredTopic;
 
+    @Value("${spring.kafka.topic.password-reset}")
+    private String passwordResetTopic;
+
     /**
-     * Publishes a RegisteredUserEvent to Kafka asynchronously.
-     * The user's ID is used as the message key to ensure that events
-     * from the same user are sent to the same partition, preserving order.
+     * Publishes a {@link UserRegisteredEvent} to the Kafka topic configured via {@code spring.kafka.topic.user-registered}.
      *
-     * @param event The event payload containing the user's registration details. Must not be null.
-     * @apiNote This method operates in a "fire-and-forget" mode. The result of the send operation is handled
-     * asynchronously via logging. Requires the KafkaTemplate to be configured with a serializer
-     * compatible with RegisteredUserEvent, such as JsonSerializer.
+     * @param event the user registration event to be published. Must not be null.
      */
     public void publishUserRegisteredEvent(UserRegisteredEvent event) {
         Assert.notNull(event, "UserRegisteredEvent must not be null");
+        publishEvent(userRegisteredTopic, event.userId().toString(), event);
+    }
+
+    /**
+     * Publishes a {@link PasswordResetEvent} to the Kafka topic configured via {@code spring.kafka.topic.password-reset}.
+     *
+     * @param event the password reset request event to be published. Must not be null.
+     */
+    public void publishPasswordResetEvent(PasswordResetEvent event) {
+        Assert.notNull(event, "PasswordResetEvent must not be null");
+        publishEvent(passwordResetTopic, event.email(), event);
+    }
+
+    /**
+     * Generic method that publishes any event to the specified Kafka topic.
+     * Uses the provided key to determine partitioning and logs success or failure accordingly.
+     *
+     * @param topic the Kafka topic to which the event should be published
+     * @param key   the message key used for partitioning (e.g. user ID or email)
+     * @param event the payload to send
+     * @param <T>   the type of the event
+     */
+    private <T> void publishEvent(String topic, String key, T event) {
+        log.info("[Kafka] Preparing to publish event to topic: '{}', key: '{}', payload type: {}",
+                topic, key, event.getClass().getSimpleName());
 
         try {
-            String key = event.userId().toString();
-            log.info("Trying to publish event for registered user with email: {}", event.email());
-
-            kafkaTemplate.send(userRegisteredTopic, key, event)
-                    .thenAccept(result ->
-                            log.info("Event successfully published to user ID {}. Topic: {}, Partition: {}, Offset: {}",
-                                    key,
-                                    result.getRecordMetadata().topic(),
-                                    result.getRecordMetadata().partition(),
-                                    result.getRecordMetadata().offset()))
+            kafkaTemplate.send(topic, key, event)
+                    .thenAccept(result -> {
+                        log.info("[Kafka] Event published successfully.");
+                        log.debug("[Kafka] Topic: {}, Partition: {}, Offset: {}, Key: {}, Payload: {}",
+                                result.getRecordMetadata().topic(),
+                                result.getRecordMetadata().partition(),
+                                result.getRecordMetadata().offset(),
+                                key,
+                                event);
+                    })
                     .exceptionally(ex -> {
-                        log.error("Failed to publish event for user ID {} asynchronously.", key, ex);
+                        log.error("[Kafka] Failed to publish event. Topic: {}, Key: {}, Error: {}",
+                                topic, key, ex.getMessage(), ex);
                         return null;
                     });
-        } catch (Exception e) {
-            log.error("Unexpected synchronous error while attempting to send event for user ID {}: {}", event.userId(), e.getMessage(), e);
+
+        } catch (Exception ex) {
+            log.error("[Kafka] Unexpected error while publishing event. Topic: {}, Key: {}, Error: {}",
+                    topic, key, ex.getMessage(), ex);
         }
     }
 }
+
