@@ -14,37 +14,67 @@ import org.springframework.stereotype.Service;
 import java.time.Duration;
 import java.time.Instant;
 
+/**
+ * Service responsible for creating, caching, and revoking authentication tokens.
+ * <p>
+ * This service provides methods to:
+ * <ul>
+ *     <li>Create {@link Token} entities from JWT strings.</li>
+ *     <li>Store token metadata in Redis cache with automatic expiration (TTL).</li>
+ *     <li>Revoke all active tokens for a given user, both in the database and cache.</li>
+ * </ul>
+ * </p>
+ *
+ * <p>Tokens include both ACCESS and REFRESH types and are associated with user metadata
+ * such as IP address and user agent for additional security tracking.</p>
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class TokenService {
+
     private final JwtProvider jwtProvider;
     private final TokenRepository tokenRepository;
     private final TokenCacheRepository cacheRepository;
 
     /**
-     * Creates a Token entity from a JWT string and metadata.
+     * Creates a {@link Token} entity using the provided JWT string and user metadata.
+     * Extracts issued/expiration timestamps from the JWT and includes request info.
      *
-     * @param tokenString The JWT in string format.
-     * @param type The token type (ACCESS_TOKEN or REFRESH_TOKEN).
-     * @param ipAddress The client's IP address.
-     * @param userAgent The client's User-Agent.
-     * @return A new Token entity, ready to be associated with a user.
+     * @param tokenString The raw JWT string.
+     * @param type        The type of token (e.g., ACCESS_TOKEN or REFRESH_TOKEN).
+     * @param user        The authenticated user.
+     * @param ipAddress   The IP address from which the token was issued.
+     * @param userAgent   The client's User-Agent string.
+     * @return A fully initialized {@link Token} entity.
      */
-    public Token createToken(String tokenString, TokenType  type, User user, String ipAddress, String userAgent) {
+    public Token createToken(String tokenString, TokenType type, User user, String ipAddress, String userAgent) {
         Instant issuedAt = jwtProvider.extractIssuedAt(tokenString).toInstant();
         Instant expiresAt = jwtProvider.extractExpiration(tokenString).toInstant();
-        log.trace("Created {} token. Issued: {}, Expires: {}", type, issuedAt, expiresAt);
-        return new Token(tokenString, type, issuedAt, expiresAt, ipAddress, userAgent, true, user);
+
+        log.trace("[TokenService] Creating {} token. Issued at: {}, Expires at: {}", type, issuedAt, expiresAt);
+
+        return new Token(
+                tokenString,
+                type,
+                issuedAt,
+                expiresAt,
+                ipAddress,
+                userAgent,
+                true,
+                user
+        );
     }
 
     /**
-     * Guarda la información de un token en el caché (Redis) con un TTL apropiado.
+     * Stores a token and its associated metadata in Redis cache with a TTL matching the token's expiration.
      *
-     * @param user El usuario dueño del token.
-     * @param token El token a cachear.
+     * @param user  The owner of the token.
+     * @param token The {@link Token} to be cached.
      */
     public void saveTokenInCache(User user, Token token) {
+        Duration ttl = Duration.between(Instant.now(), token.getExpiresAt());
+
         TokenData data = new TokenData(
                 user.getId().toString(),
                 true,
@@ -53,23 +83,34 @@ public class TokenService {
                 token.getUserAgent()
         );
 
-        Duration ttl = Duration.between(Instant.now(), token.getExpiresAt());
         cacheRepository.save(token.getToken(), data, ttl);
-        log.debug("Cached token for user ID: {} with TTL: {} seconds", user.getId(), ttl.getSeconds());
+
+        log.debug("[TokenService] Cached token for user ID: {} with TTL: {} seconds", user.getId(), ttl.getSeconds());
     }
 
+    /**
+     * Revokes all valid (non-expired and not previously revoked) tokens for a given user.
+     * The tokens are revoked in both the database and the Redis cache.
+     *
+     * @param user The user whose tokens will be revoked.
+     */
     public void revokeAllUserTokens(User user) {
         var validUserTokens = tokenRepository.findAllValidTokensByUser(user.getId());
+
         if (validUserTokens.isEmpty()) {
+            log.debug("[TokenService] No valid tokens to revoke for user ID: {}", user.getId());
             return;
         }
 
-        log.debug("Revoking {} old tokens for user ID: {}", validUserTokens.size(), user.getId());
+        log.info("[TokenService] Revoking {} valid tokens for user ID: {}", validUserTokens.size(), user.getId());
+
         validUserTokens.forEach(token -> {
             token.revoke();
             cacheRepository.delete(token.getToken());
+            log.trace("[TokenService] Revoked token with user: {}", token.getUser());
         });
-        tokenRepository.saveAll(validUserTokens);
-    }
 
+        tokenRepository.saveAll(validUserTokens);
+        log.debug("[TokenService] Revoked tokens saved in database for user ID: {}", user.getId());
+    }
 }

@@ -5,7 +5,7 @@ import java.util.*;
 public class User {
 
     private UUID id;
-    private String name;
+    private String userName;
     private String email;
     private String password;
     private final Set<Role> roles;
@@ -13,8 +13,8 @@ public class User {
     private boolean emailVerified;
     private final Set<Token> tokens;
 
-    public static User register(String name, String email, String password, Set<Role> roles) {
-        return new User(UUID.randomUUID(), name, email, password, roles != null ? roles : new HashSet<>(), true, false, new HashSet<>());
+    public static User register(String userName, String email, String password, Set<Role> roles) {
+        return new User(UUID.randomUUID(), userName, email, password, roles != null ? roles : new HashSet<>(), true, false, new HashSet<>());
     }
 
     public User(UUID id, String name, String email, String password, Set<Role> roles,
@@ -29,7 +29,7 @@ public class User {
     }
 
     public UUID getId() { return id;}
-    public String getName() { return name; }
+    public String getUserName() { return userName; }
     public String getEmail() { return email; }
     public String getPassword() { return password; }
     public Set<Role> getRoles() { return Collections.unmodifiableSet(roles); }
@@ -55,7 +55,7 @@ public class User {
     }
 
     public void changeName(String newName) {
-        this.name = Objects.requireNonNull(newName);
+        this.userName = Objects.requireNonNull(newName);
     }
 
     public void changePassword(String newPassword) {
