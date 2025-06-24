@@ -33,6 +33,11 @@ public class UserRepositoryJpaAdapter implements UserRepository {
     }
 
     @Override
+    public boolean existsByUserName(String userName) {
+        return jpaRepo.existsByUserName(userName);
+    }
+
+    @Override
     public void save(User user) {
         jpaRepo.save(mapper.toEntity(user));
     }

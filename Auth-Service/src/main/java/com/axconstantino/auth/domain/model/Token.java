@@ -22,6 +22,7 @@ public class Token {
         this.ipAddress = ipAddress;
         this.userAgent = userAgent;
         this.active = active;
+        this.user = user;
     }
 
     public String getToken() { return token; }
