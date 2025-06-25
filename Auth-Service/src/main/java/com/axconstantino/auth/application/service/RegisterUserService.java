@@ -57,7 +57,7 @@ public class RegisterUserService implements RegisterUser {
      * @param command      Contains email, password, and username from client.
      * @param httpRequest  Used to extract client context (IP and User-Agent).
      * @return TokenResponse containing both access and refresh tokens.
-     * @throws IllegalStateException if the email or username is already in use.
+     * @throws DuplicateCredentialsException if the email or username is already in use.
      */
     @Override
     @Transactional
@@ -117,13 +117,13 @@ public class RegisterUserService implements RegisterUser {
      * Ensures that the provided email is not already associated with an existing user.
      *
      * @param email the email to validate
-     * @throws IllegalStateException if the email is already registered
+     * @throws DuplicateCredentialsException if the email is already registered
      */
     private void validateEmailNotInUse(String email) {
         if (repository.existsByEmail(email)) {
             String errorMessage = String.format("Email '%s' is already registered", email);
             log.error("[RegisterUserService] {}", errorMessage);
-            throw new IllegalStateException(errorMessage);
+            throw new DuplicateCredentialsException(errorMessage);
         }
     }
 

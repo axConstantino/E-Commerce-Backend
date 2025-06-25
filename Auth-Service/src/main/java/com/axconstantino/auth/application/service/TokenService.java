@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Service responsible for creating, caching, and revoking authentication tokens.
@@ -77,13 +78,14 @@ public class TokenService {
 
         TokenData data = new TokenData(
                 user.getId().toString(),
+                token.getToken(),
                 true,
                 token.getExpiresAt(),
                 token.getIpAddress(),
                 token.getUserAgent()
         );
 
-        cacheRepository.save(token.getToken(), data, ttl);
+        cacheRepository.save(data, ttl.toSeconds(), TimeUnit.SECONDS);
 
         log.debug("[TokenService] Cached token for user ID: {} with TTL: {} seconds", user.getId(), ttl.getSeconds());
     }

@@ -4,7 +4,7 @@ import com.axconstantino.auth.application.command.ChangeUserNameCommand;
 import com.axconstantino.auth.application.usecase.ChangeUserName;
 import com.axconstantino.auth.domain.exception.BadCredentialsException;
 import com.axconstantino.auth.domain.exception.DuplicateCredentialsException;
-import com.axconstantino.auth.domain.exception.UserNotFoudException;
+import com.axconstantino.auth.domain.exception.UserNotFoundException;
 import com.axconstantino.auth.domain.model.User;
 import com.axconstantino.auth.domain.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +22,7 @@ public class ChangeUserNameService implements ChangeUserName {
 
     private final UserRepository repository;
     private final PasswordEncoder passwordEncoder;
+    private final TokenService tokenService;
 
     /**
      * Changes the username of a user after verifying credentials and uniqueness.
@@ -31,7 +32,7 @@ public class ChangeUserNameService implements ChangeUserName {
     @Override
     public void execute(ChangeUserNameCommand command) {
         User user = repository.findById(command.userId())
-                .orElseThrow(() -> new UserNotFoudException("User Not Found"));
+                .orElseThrow(() -> new UserNotFoundException("User Not Found"));
 
         if (!passwordEncoder.matches(command.currentPassword(), user.getPassword())) {
             log.warn("[ChangeUserNameService] Incorrect password for user ID: {}", command.userId());
@@ -45,5 +46,7 @@ public class ChangeUserNameService implements ChangeUserName {
 
         user.changeName(command.newName());
         log.info("[ChangeUserNameService] Username updated for user ID: {}", user.getId());
+        tokenService.revokeAllUserTokens(user);
+        log.info("[ChangeEmailService] All tokens revoked for user ID: {}", user.getId());
     }
 }

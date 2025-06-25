@@ -3,7 +3,7 @@ package com.axconstantino.auth.application.service;
 import com.axconstantino.auth.application.command.ResetPasswordCommand;
 import com.axconstantino.auth.application.usecase.ResetPassword;
 import com.axconstantino.auth.domain.exception.BadCredentialsException;
-import com.axconstantino.auth.domain.exception.UserNotFoudException;
+import com.axconstantino.auth.domain.exception.UserNotFoundException;
 import com.axconstantino.auth.domain.model.User;
 import com.axconstantino.auth.domain.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class ResetPasswordService implements ResetPassword {
 
     private final UserRepository repository;
+    private final TokenService  tokenService;
     private final PasswordEncoder passwordEncoder;
     private final RedisTemplate<String, String> redisTemplate;
 
@@ -34,7 +35,7 @@ public class ResetPasswordService implements ResetPassword {
     @Transactional
     public void execute(ResetPasswordCommand command) {
         User user = repository.findByEmail(command.email())
-                .orElseThrow(() -> new UserNotFoudException("User not found"));
+                .orElseThrow(() -> new UserNotFoundException("User not found"));
 
         String key = "password-reset" + user.getId();
         String storedCode = redisTemplate.opsForValue().get(key);
@@ -47,5 +48,7 @@ public class ResetPasswordService implements ResetPassword {
         user.changePassword(passwordEncoder.encode(command.newPassword()));
         redisTemplate.delete(key);
         log.info("[ResetPasswordService] Password successfully reset for user ID: {}", user.getId());
+        tokenService.revokeAllUserTokens(user);
+        log.info("[ChangeEmailService] All tokens revoked for user ID: {}", user.getId());
     }
 }

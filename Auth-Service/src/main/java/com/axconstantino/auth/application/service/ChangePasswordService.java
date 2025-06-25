@@ -3,7 +3,7 @@ package com.axconstantino.auth.application.service;
 import com.axconstantino.auth.application.command.ChangePasswordCommand;
 import com.axconstantino.auth.application.usecase.ChangePassword;
 import com.axconstantino.auth.domain.exception.BadCredentialsException;
-import com.axconstantino.auth.domain.exception.UserNotFoudException;
+import com.axconstantino.auth.domain.exception.UserNotFoundException;
 import com.axconstantino.auth.domain.model.User;
 import com.axconstantino.auth.domain.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +22,7 @@ public class ChangePasswordService implements ChangePassword {
 
     private final UserRepository repository;
     private final PasswordEncoder passwordEncoder;
+    private final TokenService tokenService;
 
     /**
      * Validates the current password and updates it with the new one.
@@ -34,7 +35,7 @@ public class ChangePasswordService implements ChangePassword {
         User user = repository.findById(command.userId())
                 .orElseThrow(() -> {
                     log.error("[ChangePasswordService] User not found with ID: {}", command.userId());
-                    return new UserNotFoudException("User not found");
+                    return new UserNotFoundException("User not found");
                 });
 
         if (!passwordEncoder.matches(command.currentPassword(), user.getPassword())) {
@@ -44,6 +45,8 @@ public class ChangePasswordService implements ChangePassword {
 
         user.changePassword(passwordEncoder.encode(command.newPassword()));
         log.info("[ChangePasswordService] Password updated for user ID: {}", user.getId());
+        tokenService.revokeAllUserTokens(user);
+        log.info("[ChangeEmailService] All tokens revoked for user ID: {}", user.getId());
     }
 }
 

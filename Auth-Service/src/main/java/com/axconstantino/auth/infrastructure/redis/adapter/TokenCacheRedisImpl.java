@@ -8,9 +8,9 @@ import com.axconstantino.auth.infrastructure.redis.model.TokenData;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
 
-import java.time.Duration;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 @RequiredArgsConstructor
 public class TokenCacheRedisImpl implements TokenCacheRepository {
@@ -24,9 +24,12 @@ public class TokenCacheRedisImpl implements TokenCacheRepository {
     private static final String USER_PREFIX = "auth:user:";
 
     @Override
-    public void save(String token, TokenData tokenData, Duration ttl) {
+    public void save(TokenData tokenData, long ttl, TimeUnit unit) {
+        String tokenKey = TOKEN_PREFIX + tokenData.tokenValue();
+        String userKey = USER_PREFIX + tokenData.userId();
+
         RedisTokenEntity entity = RedisTokenEntity.builder()
-                .token(token)
+                .token(tokenData.tokenValue())
                 .userId(tokenData.userId())
                 .active(tokenData.active())
                 .expiresAt(tokenData.expiresAt())
@@ -34,8 +37,9 @@ public class TokenCacheRedisImpl implements TokenCacheRepository {
                 .userAgent(tokenData.userAgent())
                 .build();
 
-        redisTemplate.opsForValue().set(TOKEN_PREFIX + token, entity, ttl);
-        redisStringTemplate.opsForSet().add(USER_PREFIX + tokenData.userId(), token);
+        redisTemplate.opsForValue().set(tokenKey, entity, ttl, unit);
+        redisStringTemplate.opsForSet().add(userKey, tokenData.tokenValue());
+        redisStringTemplate.expire(userKey, ttl, unit);
     }
 
     @Override
@@ -53,10 +57,14 @@ public class TokenCacheRedisImpl implements TokenCacheRepository {
     @Override
     public void deleteAllForUser(String userId) {
         String userKey = USER_PREFIX + userId;
-        Set<RedisTokenEntity> tokens = redisTemplate.opsForSet().members(userKey);
+        Set<String> tokens = redisStringTemplate.opsForSet().members(userKey);
+
         if (tokens != null) {
-            tokens.forEach(t -> redisTemplate.delete(TOKEN_PREFIX + t));
+            for (String token : tokens) {
+                redisTemplate.delete(TOKEN_PREFIX + token);
+            }
         }
-        redisTemplate.delete(userKey);
+
+        redisStringTemplate.delete(userKey);
     }
 }
