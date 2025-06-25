@@ -18,13 +18,13 @@ public class TokenRepositoryJpaAdapter implements TokenRepository {
 
     @Override
     public Optional<Token> findByToken(String token) {
-        return jpaRepo.findByToken(token)
+        return jpaRepo.findByTokenValue(token)
                 .map(mapper::toDomain);
     }
 
     @Override
     public List<Token> findAllValidTokensByUser(UUID userId) {
-        return jpaRepo.findAllValidTokensByUser(userId)
+        return jpaRepo.findByUserIdAndActiveTrue(userId)
                 .stream()
                 .map(mapper::toDomain)
                 .toList();
