@@ -4,15 +4,15 @@ import com.axconstantino.auth.domain.model.Role;
 import com.axconstantino.auth.domain.model.User;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.io.Decoders;
-import io.jsonwebtoken.security.Keys;
+import io.jsonwebtoken.SignatureAlgorithm;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import lombok.extern.slf4j.Slf4j;
 import lombok.RequiredArgsConstructor;
 
-import javax.crypto.SecretKey;
+import java.security.PrivateKey;
+import java.security.PublicKey;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -25,17 +25,17 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class JwtProvider {
 
-    @Value("${jwt.secret-key}")
-    private final String secretKey;
+    private final PrivateKey privateKey;
+    private final PublicKey publicKey;
 
     @Value("${jwt.issuer}")
-    private final String issuer;
+    private String issuer;
 
     @Value("${jwt.access-token.expiration-time}")
-    private final long accessTokenExpiration;
+    private long accessTokenExpiration;
 
     @Value("${jwt.refresh-token.expiration-time}")
-    private final long refreshTokenExpiration;
+    private long refreshTokenExpiration;
 
 
     public String extractUsername(String token) {
@@ -55,9 +55,9 @@ public class JwtProvider {
         String roles = user.getRoles().stream()
                 .map(Role::name)
                 .collect(Collectors.joining(","));
-
         extraClaims.put("roles", roles);
         extraClaims.put("userId", user.getId().toString());
+        extraClaims.put("username", user.getUserName());
 
         return buildToken(extraClaims, user, accessTokenExpiration);
     }
@@ -65,13 +65,14 @@ public class JwtProvider {
     public String generateRefreshToken(User user) {
         Map<String, Object> extraClaims = new HashMap<>();
         extraClaims.put("userId", user.getId().toString());
+
         return buildToken(extraClaims, user, refreshTokenExpiration);
     }
 
     public boolean isTokenValid(String token, User user) {
         try {
             final String username = extractUsername(token);
-            return (username.equals(user.getEmail())) && !isTokenExpired(token);
+            return username.equals(user.getEmail()) && !isTokenExpired(token);
         } catch (Exception e) {
             log.error("Token validation error: {}", e.getMessage());
             return false;
@@ -91,6 +92,14 @@ public class JwtProvider {
         return claimsResolver.apply(claims);
     }
 
+    private Claims extractAllClaims(String token) {
+        return Jwts.parser()
+                .verifyWith(publicKey)
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
+    }
+
     private String buildToken(Map<String, Object> extraClaims, User user, long expiration) {
         return Jwts.builder()
                 .claims(extraClaims)
@@ -98,20 +107,7 @@ public class JwtProvider {
                 .issuer(issuer)
                 .issuedAt(new Date(System.currentTimeMillis()))
                 .expiration(new Date(System.currentTimeMillis() + expiration))
-                .signWith(getSignInKey())
+                .signWith(privateKey, SignatureAlgorithm.RS256)
                 .compact();
-    }
-
-    private Claims extractAllClaims(String token) {
-        return Jwts.parser()
-                .verifyWith(getSignInKey())
-                .build()
-                .parseSignedClaims(token)
-                .getPayload();
-    }
-
-    private SecretKey getSignInKey() {
-        byte[] keyBytes = Decoders.BASE64.decode(secretKey);
-        return Keys.hmacShaKeyFor(keyBytes);
     }
 }
