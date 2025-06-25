@@ -11,7 +11,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class ChangePasswordRequest {
     @NotBlank
-    @ValidPassword
     private String currentPassword;
 
     @NotBlank

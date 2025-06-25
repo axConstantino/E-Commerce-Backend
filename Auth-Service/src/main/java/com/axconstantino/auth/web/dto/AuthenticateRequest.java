@@ -1,6 +1,5 @@
 package com.axconstantino.auth.web.dto;
 
-import com.axconstantino.auth.application.validation.ValidPassword;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
@@ -16,6 +15,5 @@ public class AuthenticateRequest {
     private String email;
 
     @NotBlank
-    @ValidPassword
     private String password;
 }
