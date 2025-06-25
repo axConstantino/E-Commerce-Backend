@@ -4,7 +4,7 @@ import com.axconstantino.auth.application.command.ChangeEmailCommand;
 import com.axconstantino.auth.application.usecase.ChangeEmail;
 import com.axconstantino.auth.domain.exception.BadCredentialsException;
 import com.axconstantino.auth.domain.exception.DuplicateCredentialsException;
-import com.axconstantino.auth.domain.exception.UserNotFoudException;
+import com.axconstantino.auth.domain.exception.UserNotFoundException;
 import com.axconstantino.auth.domain.model.User;
 import com.axconstantino.auth.domain.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +23,7 @@ public class ChangeEmailService implements ChangeEmail {
 
     private final UserRepository repository;
     private final PasswordEncoder passwordEncoder;
+    private final TokenService tokenService;
 
     /**
      * Changes the user's email after verifying password and uniqueness of new email.
@@ -33,7 +34,7 @@ public class ChangeEmailService implements ChangeEmail {
     @Transactional
     public void execute(ChangeEmailCommand command) {
         User user = repository.findById(command.userId())
-                .orElseThrow(() -> new UserNotFoudException("User not found"));
+                .orElseThrow(() -> new UserNotFoundException("User not found"));
 
         if (!passwordEncoder.matches(command.currentPassword(), user.getPassword())) {
             log.warn("[ChangeEmailService] Incorrect password for user ID: {}", command.userId());
@@ -47,5 +48,7 @@ public class ChangeEmailService implements ChangeEmail {
 
         user.changeEmail(command.newEmail());
         log.info("[ChangeEmailService] Email updated for user ID: {}", user.getId());
+        tokenService.revokeAllUserTokens(user);
+        log.info("[ChangeEmailService] All tokens revoked for user ID: {}", user.getId());
     }
 }
