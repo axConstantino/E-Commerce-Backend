@@ -13,10 +13,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/auth")
@@ -28,6 +25,8 @@ public class AuthController {
     private final RefreshToken refreshToken;
     private final ResetPassword resetPassword;
     private final ForgotPassword forgotPassword;
+    private final RequestEmailVerification requestEmailVerification;
+    private final VerifyEmail verifyEmail;
 
     @PostMapping("/register")
     public ResponseEntity<TokenResponse> register(@Valid @RequestBody RegisterRequest request, HttpServletRequest httpRequest) {
@@ -75,5 +74,17 @@ public class AuthController {
         ));
 
         return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/request-email-verification")
+    public ResponseEntity<Void> requestEmailVerification(@RequestParam String email) {
+        requestEmailVerification.execute(email);
+        return ResponseEntity.accepted().build();
+    }
+
+    @PostMapping("/verify-email")
+    public ResponseEntity<Void> verifyEmail(@RequestParam String token) {
+        verifyEmail.execute(token);
+        return ResponseEntity.ok().build();
     }
 }

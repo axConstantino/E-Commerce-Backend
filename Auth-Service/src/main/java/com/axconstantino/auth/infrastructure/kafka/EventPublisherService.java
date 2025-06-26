@@ -1,7 +1,6 @@
 package com.axconstantino.auth.infrastructure.kafka;
 
-import com.axconstantino.auth.domain.event.PasswordResetEvent;
-import com.axconstantino.auth.domain.event.UserRegisteredEvent;
+import com.axconstantino.auth.domain.event.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -20,6 +19,7 @@ import org.springframework.util.Assert;
  * <ul>
  *     <li>{@link UserRegisteredEvent}</li>
  *     <li>{@link PasswordResetEvent}</li>
+ *     <li>{@link EmailVerificationEvent}</li>
  * </ul>
  *
  * <p>New events can be added easily by creating a new publish method that delegates to {@code publishEvent()}.</p>
@@ -36,6 +36,9 @@ public class EventPublisherService {
 
     @Value("${spring.kafka.topic.password-reset}")
     private String passwordResetTopic;
+
+    @Value("${spring.kafka.topic.email-verification}")
+    private String emailVerificationTopic;
 
     /**
      * Publishes a {@link UserRegisteredEvent} to the Kafka topic configured via {@code spring.kafka.topic.user-registered}.
@@ -55,6 +58,16 @@ public class EventPublisherService {
     public void publishPasswordResetEvent(PasswordResetEvent event) {
         Assert.notNull(event, "PasswordResetEvent must not be null");
         publishEvent(passwordResetTopic, event.email(), event);
+    }
+
+    /**
+     * Publishes an {@link EmailVerificationEvent} to the Kafka topic configured via {@code spring.kafka.topic.email-verification}.
+     *
+     * @param event the email verification event to be published. Must not be null.
+     */
+    public void publishEmailVerificationEvent(EmailVerificationEvent event) {
+        Assert.notNull(event, "EmailVerificationEvent must not be null");
+        publishEvent(emailVerificationTopic, event.email(), event);
     }
 
     /**

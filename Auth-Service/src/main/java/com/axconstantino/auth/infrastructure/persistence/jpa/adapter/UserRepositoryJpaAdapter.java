@@ -5,6 +5,7 @@ import com.axconstantino.auth.domain.repository.UserRepository;
 import com.axconstantino.auth.infrastructure.persistence.jpa.repository.UserJpaRepository;
 import com.axconstantino.auth.infrastructure.persistence.mapper.UserJpaMapper;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.Cacheable;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -22,6 +23,7 @@ public class UserRepositoryJpaAdapter implements UserRepository {
     }
 
     @Override
+    @Cacheable(value = "users", key = "#email")
     public Optional<User> findByEmail(String email) {
         return jpaRepo.findByEmail(email)
                 .map(mapper::toDomain);

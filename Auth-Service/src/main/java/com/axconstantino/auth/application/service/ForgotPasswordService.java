@@ -15,6 +15,7 @@ import java.security.SecureRandom;
 import java.time.Duration;
 import java.util.Random;
 
+
 /**
  * Service responsible for initiating the password reset process by generating and sending a code via Kafka.
  */
@@ -48,8 +49,13 @@ public class ForgotPasswordService implements ForgotPassword {
         log.info("[ForgotPasswordService] Reset code generated and published for user ID: {}", user.getId());
     }
 
-    private String generate6DigitCode() {
-        int code = RANDOM.nextInt(1_000_000);
-        return String.format("%06d", code);
+    /**
+     * Generates a random 6-digit code.
+     *
+     * @return A string representing a 6-digit code, padded with leading zeros if necessary.
+     */
+    public static String generate6DigitCode() {
+        return String.format("%06d", RANDOM.nextInt(1_000_000));
     }
+
 }
