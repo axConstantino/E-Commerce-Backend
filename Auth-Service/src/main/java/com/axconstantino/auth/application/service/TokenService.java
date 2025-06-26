@@ -115,4 +115,10 @@ public class TokenService {
         tokenRepository.saveAll(validUserTokens);
         log.debug("[TokenService] Revoked tokens saved in database for user ID: {}", user.getId());
     }
+
+    public void deleteTokenFromCache(String token) {
+        cacheRepository.delete(token);
+        log.debug("[TokenService] Token deleted from cache: {}", token);
+    }
+
 }
