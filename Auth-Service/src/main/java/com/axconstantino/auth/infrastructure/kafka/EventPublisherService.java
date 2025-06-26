@@ -40,6 +40,9 @@ public class EventPublisherService {
     @Value("${spring.kafka.topic.email-verification}")
     private String emailVerificationTopic;
 
+    @Value("${spring.kafka.topic.user-deleted}")
+    private String userDeletedTopic;
+
     /**
      * Publishes a {@link UserRegisteredEvent} to the Kafka topic configured via {@code spring.kafka.topic.user-registered}.
      *
@@ -68,6 +71,16 @@ public class EventPublisherService {
     public void publishEmailVerificationEvent(EmailVerificationEvent event) {
         Assert.notNull(event, "EmailVerificationEvent must not be null");
         publishEvent(emailVerificationTopic, event.email(), event);
+    }
+
+    /**
+     * Publishes a {@link UserDeletedEvent} to the Kafka topic configured via {@code spring.kafka.topic.user-deleted}.
+     *
+     * @param event the user deletion event to be published. Must not be null.
+     */
+    public void publishUserDeletedEvent(UserDeletedEvent event) {
+        Assert.notNull(event, "UserDeletedEvent must not be null");
+        publishEvent(userDeletedTopic, event.userId().toString(), event);
     }
 
     /**
