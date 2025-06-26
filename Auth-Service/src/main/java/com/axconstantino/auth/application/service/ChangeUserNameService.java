@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Service to handle changing the username of an authenticated user.
@@ -30,6 +31,7 @@ public class ChangeUserNameService implements ChangeUserName {
      * @param command Contains userId, current password, and new username.
      */
     @Override
+    @Transactional
     public void execute(ChangeUserNameCommand command) {
         User user = repository.findById(command.userId())
                 .orElseThrow(() -> new UserNotFoundException("User Not Found"));
