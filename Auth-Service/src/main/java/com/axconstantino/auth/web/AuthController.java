@@ -27,6 +27,7 @@ public class AuthController {
     private final ForgotPassword forgotPassword;
     private final RequestEmailVerification requestEmailVerification;
     private final VerifyEmail verifyEmail;
+    private final Logout logout;
 
     @PostMapping("/register")
     public ResponseEntity<TokenResponse> register(@Valid @RequestBody RegisterRequest request, HttpServletRequest httpRequest) {
@@ -49,6 +50,12 @@ public class AuthController {
 
         final TokenResponse response = loginUser.execute(command, httpRequest);
         return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout(HttpServletRequest request) {
+        logout.execute(request);
+        return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/refresh-token")

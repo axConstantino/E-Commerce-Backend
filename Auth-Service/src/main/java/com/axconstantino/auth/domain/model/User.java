@@ -1,5 +1,6 @@
 package com.axconstantino.auth.domain.model;
 
+import java.time.Instant;
 import java.util.*;
 
 public class User {
@@ -11,20 +12,22 @@ public class User {
     private final Set<Role> roles;
     private boolean active;
     private boolean emailVerified;
+    private Instant deletedAt;
     private final Set<Token> tokens;
 
     public static User register(String userName, String email, String password, Set<Role> roles) {
-        return new User(UUID.randomUUID(), userName, email, password, roles != null ? roles : new HashSet<>(), true, false, new HashSet<>());
+        return new User(UUID.randomUUID(), userName, email, password, roles != null ? roles : new HashSet<>(), true, false, null, new HashSet<>());
     }
 
     public User(UUID id, String name, String email, String password, Set<Role> roles,
-                boolean active, boolean emailVerified, Set<Token> tokens) {
+                boolean active, boolean emailVerified, Instant deletedAt, Set<Token> tokens) {
         this.id = id;
         this.email = Objects.requireNonNull(email);
         this.password = Objects.requireNonNull(password);
         this.roles = new HashSet<>(Objects.requireNonNull(roles));
         this.active = active;
         this.emailVerified = emailVerified;
+        this.deletedAt = deletedAt;
         this.tokens = new HashSet<>(Objects.requireNonNull(tokens));
     }
 
@@ -35,6 +38,7 @@ public class User {
     public Set<Role> getRoles() { return Collections.unmodifiableSet(roles); }
     public boolean isActive() { return active; }
     public boolean isEmailVerified() { return emailVerified; }
+    public Instant getDeletedAt() { return deletedAt; }
     public Set<Token> getTokens() { return Collections.unmodifiableSet(tokens); }
 
     public boolean isAdmin() {

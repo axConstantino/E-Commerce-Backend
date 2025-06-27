@@ -16,5 +16,6 @@ public interface UserRepository {
 
     void save(User user);
 
+    void deleteById(UUID id);
 }
 
