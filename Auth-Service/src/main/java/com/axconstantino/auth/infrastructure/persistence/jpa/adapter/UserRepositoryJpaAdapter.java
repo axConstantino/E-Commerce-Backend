@@ -6,6 +6,8 @@ import com.axconstantino.auth.infrastructure.persistence.jpa.repository.UserJpaR
 import com.axconstantino.auth.infrastructure.persistence.mapper.UserJpaMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -37,6 +39,12 @@ public class UserRepositoryJpaAdapter implements UserRepository {
     @Override
     public boolean existsByUserName(String userName) {
         return jpaRepo.existsByUserName(userName);
+    }
+
+    @Override
+    public Page<User> findAll(Pageable pageable) {
+        return jpaRepo.findAll(pageable)
+                .map(mapper::toDomain);
     }
 
     @Override

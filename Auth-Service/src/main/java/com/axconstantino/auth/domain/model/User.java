@@ -53,6 +53,10 @@ public class User {
         this.active = false;
     }
 
+    public void activate() {
+        this.active = true;
+    }
+
     public void changeEmail(String newEmail) {
         this.email = Objects.requireNonNull(newEmail);
         this.emailVerified = false;

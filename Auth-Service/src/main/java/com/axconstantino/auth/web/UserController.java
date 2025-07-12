@@ -6,7 +6,7 @@ import com.axconstantino.auth.application.command.ChangeUserNameCommand;
 import com.axconstantino.auth.application.usecase.ChangeEmail;
 import com.axconstantino.auth.application.usecase.ChangePassword;
 import com.axconstantino.auth.application.usecase.ChangeUserName;
-import com.axconstantino.auth.application.usecase.DeleteUser;
+import com.axconstantino.auth.application.usecase.DeleteAccount;
 import com.axconstantino.auth.web.dto.ChangeEmailRequest;
 import com.axconstantino.auth.web.dto.ChangePasswordRequest;
 import com.axconstantino.auth.web.dto.ChangeUserNameRequest;
@@ -28,7 +28,7 @@ public class UserController {
     private final ChangePassword changePassword;
     private final ChangeEmail changeEmail;
     private final ChangeUserName changeUserName;
-    private final DeleteUser deleteUser;
+    private final DeleteAccount deleteUser;
 
     @PatchMapping("/password")
     public ResponseEntity<Void> changePassword(@AuthenticationPrincipal Jwt principal,
