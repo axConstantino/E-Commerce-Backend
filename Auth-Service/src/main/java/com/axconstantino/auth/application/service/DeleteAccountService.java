@@ -1,6 +1,6 @@
 package com.axconstantino.auth.application.service;
 
-import com.axconstantino.auth.application.usecase.DeleteUser;
+import com.axconstantino.auth.application.usecase.DeleteAccount;
 import com.axconstantino.auth.domain.event.UserDeletedEvent;
 import com.axconstantino.auth.domain.exception.UserNotFoundException;
 import com.axconstantino.auth.domain.model.User;
@@ -23,7 +23,7 @@ import java.util.UUID;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class DeleteUserService implements DeleteUser {
+public class DeleteAccountService implements DeleteAccount {
 
     private final UserRepository repository;
     private final TokenService tokenService;
